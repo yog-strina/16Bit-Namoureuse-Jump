@@ -19,6 +19,8 @@ public class Player2DController : MonoBehaviour {
     public bool isGrounded;
     public bool isFlipped;
     public bool jumps;
+    public List<FollowerController> followers;
+
     private float jumpLerp;
     private float horizontalAxis;
     private Rigidbody2D rigidBody2D;
@@ -60,6 +62,8 @@ public class Player2DController : MonoBehaviour {
         
             //Movements
         if (horizontalAxis != 0) {
+            foreach (FollowerController follower in followers)
+                follower.FlipSprite(isFlipped);
             spriteRenderer.flipX = isFlipped;
             transform.position += new Vector3(horizontalAxis * moveSpeed * Time.deltaTime, 0, 0);
         }
@@ -70,10 +74,16 @@ public class Player2DController : MonoBehaviour {
             animator.SetBool("IsWalking", false);
         }
         else if (isWalking) {
+            foreach (FollowerController follower in followers) {
+                follower.SetWalking(true);
+            }
             animator.SetBool("IsWalking", true);
             animator.SetBool("IsJumping", false);
         }
         else if (isIdle) {
+            foreach (FollowerController follower in followers) {
+                follower.SetWalking(false);
+            }
             animator.SetBool("IsWalking", false);
             animator.SetBool("IsJumping", false);}
     }
