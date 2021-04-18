@@ -13,15 +13,18 @@ public class Player2DController : MonoBehaviour {
     public float jumpSpeed = 2f;
     public float moveSpeed = 7f;
     public float fallSpeed = 2f;
+    public float invulnerabilityTime = 3f;
     public GroundCheck groundCheck;
     public bool isWalking;
     public bool isIdle;
+    public bool isMeleeAttacking;
     public bool isGrounded;
     public bool isFlipped;
+    public bool isInvulnerable = false;
+    public bool isBlinking = false;
     public bool jumps;
     public List<FollowerController> followers;
 
-    private float jumpLerp;
     private float horizontalAxis;
     private Rigidbody2D rigidBody2D;
     private SpriteRenderer spriteRenderer;
@@ -43,6 +46,16 @@ public class Player2DController : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
+        //If Invulnerable then Blink
+        if (isInvulnerable && !isBlinking) {
+            StartCoroutine(Blink());
+            isBlinking = true;
+        }
+        else if (!isInvulnerable && isBlinking) {
+            StopCoroutine(Blink());
+            isBlinking = false;
+        }
+
         //Flags and variables
             //Variables
         horizontalAxis = Input.GetAxisRaw("Horizontal");
@@ -52,6 +65,7 @@ public class Player2DController : MonoBehaviour {
         isWalking = horizontalAxis != 0;
         isIdle = horizontalAxis == 0;
         isGrounded = groundCheck.isGrounded;
+        isMeleeAttacking = Input.GetKeyDown(KeyCode.E);
 
         //Actions
             //Jump
@@ -67,6 +81,9 @@ public class Player2DController : MonoBehaviour {
             spriteRenderer.flipX = isFlipped;
             transform.position += new Vector3(horizontalAxis * moveSpeed * Time.deltaTime, 0, 0);
         }
+
+            //Attack
+        /*TODO: Logic d'attack*/
 
         //Animations
         if (!isGrounded) {
@@ -85,6 +102,34 @@ public class Player2DController : MonoBehaviour {
                 follower.SetWalking(false);
             }
             animator.SetBool("IsWalking", false);
-            animator.SetBool("IsJumping", false);}
+            animator.SetBool("IsJumping", false);
+        }
+        animator.SetBool("IsAttacking", isMeleeAttacking);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other) {
+        Debug.Log("trigger enter");
+        //Get touched by ennemy
+        if (other.gameObject.tag == Tags.BADDY && !isInvulnerable) {
+            Debug.Log("is ennemy");
+            StartCoroutine(GetHurt());
+        }
+    }
+
+    private IEnumerator GetHurt() {
+        Debug.Log("got hurt");
+        isInvulnerable = true;
+        yield return new WaitForSeconds(invulnerabilityTime);
+        isInvulnerable = false;
+    }
+
+    private IEnumerator Blink() {
+        Debug.Log("do the blinks");
+        for (float i = invulnerabilityTime; i > 0; i -= Time.deltaTime) {
+            spriteRenderer.enabled = false;
+            yield return new WaitForSeconds(invulnerabilityTime / 20f);
+            spriteRenderer.enabled = true;
+            yield return new WaitForSeconds(invulnerabilityTime / 20f);
+        }
     }
 }
